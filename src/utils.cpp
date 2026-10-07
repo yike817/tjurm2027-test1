@@ -1,9 +1,9 @@
-#include "utils.h"
+#include "../include/utils.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "3rd/stb/stb_image.h"
+#include "../3rd/stb/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "3rd/stb/stb_image_write.h"
+#include "../3rd/stb/stb_image_write.h"
 
 
 float* fmalloc(int n) {

@@ -1,13 +1,20 @@
-#include "tests.h"
+#include "../include/tests.h"
 
 // 练习1，实现库函数strlen
 int my_strlen(char *str) {
+    
     /**
      * 统计字符串的长度，太简单了。
      */
 
     // IMPLEMENT YOUR CODE HERE
-    return 0;
+    int count = 0;
+    while (*str != '\0')
+    {
+        count++;
+        str++;
+    }
+    return count;
 }
 
 
@@ -19,6 +26,20 @@ void my_strcat(char *str_1, char *str_2) {
      */
 
     // IMPLEMENT YOUR CODE HERE
+    char *p = str_1;
+    
+    while( *p != '\0')
+    {
+        p++;
+    }
+
+    while (*str_2 != '\0')
+    {
+        *p = *str_2;
+        p++;
+        str_2++;
+    }
+    *p = '\0';
 }
 
 
@@ -31,6 +52,31 @@ char* my_strstr(char *s, char *p) {
      */
 
     // IMPLEMENT YOUR CODE HERE
+    if(*p == '\0')
+    {
+        return s;
+    }
+
+    while (*s != '\0')
+    {
+        char *a = s;
+        char *b = p;
+        while( *a != '\0' && *b != '\0')
+        {
+            
+            if(* a!= *b)
+            {
+                break;
+            }
+            a++;
+            b++;
+        }
+        if(*b == '\0')
+        {
+            return s;
+        }
+        s++;
+    }
     return 0;
 }
 
@@ -76,6 +122,7 @@ char* my_strstr(char *s, char *p) {
 
 // 练习4，将彩色图片(rgb)转化为灰度图片
 void rgb2gray(float *in, float *out, int h, int w) {
+    
     /**
      * 编写这个函数，将一张彩色图片转化为灰度图片。以下是各个参数的含义：
      * (1) float *in:  指向彩色图片对应的内存区域（或者说数组）首地址的指针。
@@ -97,10 +144,23 @@ void rgb2gray(float *in, float *out, int h, int w) {
 
     // IMPLEMENT YOUR CODE HERE
     // ...
+    for(int y = 0;y < h;y++)
+    {
+        for(int x = 0;x < w;x++)
+        {
+            int pos = y * w + x;
+            float R = in[pos * 3 ];
+            float G = in[pos * 3 + 1];
+            float B = in[pos * 3 + 2];
+            float gray = 0.1140f * R + 0.5870f * G + 0.2989 * B;
+            out[pos] = gray;
+        } 
+    }
 }
 
 // 练习5，实现图像处理算法 resize：缩小或放大图像
 void resize(float *in, float *out, int h, int w, int c, float scale) {
+
     /**
      * 图像处理知识：
      *  1.单线性插值法
@@ -197,6 +257,34 @@ void resize(float *in, float *out, int h, int w, int c, float scale) {
      */
 
     int new_h = h * scale, new_w = w * scale;
+    for(int y = 0;y<new_h;y++)
+    {
+        for(int x = 0;x<new_w;x++)
+        {
+            float x0 = x / scale;
+            float y0 = y / scale;
+            int x1 = static_cast<int>(x0);
+            int y1 = static_cast<int>(y0);
+            int x2 = x1 + 1;
+            int y2 = y1 + 1;
+            if(x1<0){x1 = 0;}
+            if(x2>=w){x2 = w - 1;}
+            if(y1<0){y1 = 0;}
+            if(y2>=h){y2 = h - 1;}
+            float dx = x0 - x1;
+            float dy = y0 - y1;
+            for(int ch = 0;ch<c;ch++)
+            {
+                float P1 = in[y1 * w * c + x1 * c + ch];
+                float P2 = in[y1 * w * c + x2 * c + ch];
+                float P3 = in[y2 * w * c + x1 * c + ch];
+                float P4 = in[y2 * w * c + x2 * c + ch];
+                float val = P1 * (1 - dx) * (1 - dy) + P2 * dx * (1 - dy) + P3 * (1 - dx) * dy + P4 * dx * dy;
+                out[y * new_w * x + x * c + ch] = val;
+            }
+
+        }
+    }
     // IMPLEMENT YOUR CODE HERE
 
 }
@@ -204,6 +292,7 @@ void resize(float *in, float *out, int h, int w, int c, float scale) {
 
 // 练习6，实现图像处理算法：直方图均衡化
 void hist_eq(float *in, int h, int w) {
+
     /**
      * 将输入图片进行直方图均衡化处理。参数含义：
      * (1) float *in: 输入的灰度图片。
@@ -221,4 +310,50 @@ void hist_eq(float *in, int h, int w) {
      */
 
     // IMPLEMENT YOUR CODE HERE
+    int total = h * w;
+    int hist[256] = {0};
+    for(int y = 0;y<h;y++)
+    {
+        for(int x = 0;x<w;x++)
+        {
+            int idx = static_cast<int>(in[y * w + x]);
+            if(idx<0){idx = 0;}
+            if(idx>255){idx = 255;}
+            hist[idx]++;
+        }
+    }
+
+    int cdf[256] = {0};
+    cdf[0] = hist[0];
+    for(int i = 1;i<256;i++)
+    {
+        cdf[i] = hist[i-1] + hist[i];
+    }
+
+    int cdf_min = total;
+    for (int i = 0; i < 256; i++)
+    {
+        if(hist[i] != 0)
+        {
+            cdf_min = cdf[i];
+            break;
+        }
+    }
+    
+    float lut[256];
+    for(int i = 0;i<256;i++)
+    {
+        lut[i] = (static_cast<float>(cdf[i] - cdf_min) / (total - cdf_min)) * 255.0f;
+    }
+
+    for(int y = 0;y<h;y++)
+    {
+        for(int x = 0;x<w;x++)
+        {
+            int gray = static_cast<int>(in[y * w + x]);
+            if(gray<0){gray=0;}
+            if(gray>255){gray+255;}
+            in[y * w + x] = lut[gray];
+        }
+    }
 }
